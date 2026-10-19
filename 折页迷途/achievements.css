@@ -1,0 +1,96 @@
+/* 纸片名牌、终章演出与全局柔和过渡。 */
+.achievement-card{background:#fffcf4;border:1px solid #e9e3d6;border-radius:18px;box-shadow:0 6px 15px #887a5d12;padding:20px}
+.badge-intro{margin:9px 0 16px;font-size:12px;color:#8a9889}
+.badge-shelf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.achievement-badge{min-width:0;display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;padding:5px 3px 7px;border:1px solid #eadfca;border-radius:10px;background:#fffaf0;box-shadow:0 3px 0 #e4d9c5;transition:transform .25s ease,filter .3s ease,box-shadow .25s ease}
+.achievement-badge svg{width:100%;height:auto;max-width:95px;filter:drop-shadow(1px 2px 1px #756d5630)}
+.achievement-badge svg .fine{stroke-width:2.3;opacity:.78}
+.achievement-badge svg .dashed{stroke-dasharray:3 5}
+.achievement-badge svg .fold{stroke-width:2;opacity:.68}
+.achievement-badge .badge-title{font-size:10px;line-height:1.25;font-weight:800;color:#486a56;white-space:nowrap;letter-spacing:-.03em}
+.badge-stars{color:#d2a25b;font-size:8px;letter-spacing:-1px}
+.achievement-badge.locked{filter:grayscale(.8);opacity:.46;box-shadow:none}
+.achievement-badge.earned:hover{transform:translateY(-3px) rotate(-2deg);box-shadow:0 6px 0 #e4d9c5}
+.achievement-badge.just-earned{animation:badgePop .9s cubic-bezier(.16,.95,.24,1.25) both}
+.boss-badge-slot{margin-top:16px;padding-top:11px;border-top:1px dashed #ddd8c7;display:flex;align-items:center;gap:12px;color:#8a9889;font-size:11px}
+.boss-badge-slot[hidden]{display:none}
+.boss-badge-slot .achievement-badge{width:82px}
+.finale-replay{margin-top:15px;width:100%;min-height:36px;border-radius:8px;background:#e9e5d8;color:#587262;font-weight:800;font-size:12px}
+.finale-replay[hidden]{display:none}
+.award-detail{display:flex;align-items:center;gap:12px;margin:12px 0;padding:9px;border-radius:12px;background:#f5eddc;color:#6b735f}
+.award-detail .achievement-badge{width:90px;flex:none;animation:badgePop .7s ease-out both}
+.award-detail strong{display:block;color:#577963;font-size:13px}
+.award-detail small{display:block;line-height:1.6;color:#8b927f}
+.boss-award{display:flex!important;justify-content:center!important;align-items:center;gap:16px;margin:12px 0 20px;padding:11px;border-radius:12px;background:#f4eadb;color:#577963;font-size:13px;font-weight:800}
+.boss-award[hidden]{display:none!important}
+.boss-award .achievement-badge{width:94px;flex:none;animation:badgePop .7s ease-out both}
+.clear-status{margin:8px 0 1px;color:#788b78;font-size:12px;font-weight:800}
+.progress-card .perfect-status{margin:3px 0 10px}
+.video-entry{width:100%;min-height:41px;margin-bottom:9px;border:1px solid #d8c9ad;border-radius:9px;background:#f4ead8;color:#796543;font-weight:800}
+.video-entry:not(:disabled):hover{background:#ecdec3}
+.video-entry:disabled{background:#ede9e0;color:#a19d90;border-color:#e3ded2}
+.video-overlay{position:fixed;z-index:58;inset:0;display:grid;place-items:center;overflow:auto;padding:18px;background:#2f4238c9;backdrop-filter:blur(6px);animation:finaleFade .25s ease both}
+.video-overlay[hidden]{display:none!important}
+.video-paper{width:min(920px,100%);padding:18px;border:1px solid #fdf8ed;border-radius:18px;background:#fffaf0;box-shadow:8px 10px 0 #d1bea0,0 24px 55px #1b31235c;animation:paperRise .35s ease both}
+.video-heading{display:flex;justify-content:space-between;gap:14px;align-items:start;margin:0 2px 15px}
+.video-heading h2{margin:6px 0;color:#46644f;font:800 clamp(20px,3vw,29px) Georgia,"Noto Serif SC",serif}
+.video-heading p{margin:0;color:#7e8b7e;font-size:12px;line-height:1.5}
+.video-heading .icon-button{flex:none;font-size:25px}
+.video-paper video{display:block;width:100%;aspect-ratio:16/9;background:#e7e3d8;border-radius:9px}
+
+.finale-screen{position:fixed;inset:0;z-index:60;overflow:auto;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 23% 18%,#fff9dd 0,transparent 35%),radial-gradient(circle at 78% 75%,#dbeadd 0,transparent 38%),#f4eddf;color:#3e5848;text-align:center;animation:finaleFade .75s ease both}
+.finale-screen[hidden],.finale-merge[hidden]{display:none!important}
+.finale-screen:before{content:"";position:fixed;inset:13px;border:1px dashed #b7c7ad;pointer-events:none;border-radius:18px}
+.finale-skip{position:fixed;top:27px;right:29px;z-index:3;background:#ffffffb8;border:1px solid #cdd9c8;border-radius:99px;color:#5c7765;font-weight:800;padding:9px 16px;box-shadow:0 2px 10px #51624a14}
+.finale-credits{position:relative;max-width:760px;animation:paperRise .8s ease both}
+.finale-spark{font-size:66px;color:#d7ab6c;line-height:1;filter:drop-shadow(0 7px 3px #b7a47844);animation:sparkPulse 3s ease-in-out infinite}
+.finale-eyebrow{color:#91a28b;font-size:13px;letter-spacing:.35em;font-weight:800;margin:23px 0 7px;animation:paperRise .8s .25s both}
+.finale-credits h2{font-family:Georgia,"Noto Serif SC","Songti SC",serif;font-size:clamp(46px,9vw,92px);letter-spacing:.14em;color:#456d55;margin:5px 0 10px;animation:paperRise .9s .55s both}
+.finale-subtitle{font-size:clamp(13px,2vw,18px);color:#7b8e7d;animation:paperRise .9s .85s both}
+.maker-list{display:grid;grid-template-columns:repeat(2,minmax(130px,1fr));gap:10px 24px;max-width:440px;margin:36px auto 12px;font:700 clamp(15px,2.3vw,19px) Georgia,serif;color:#5f7668}
+.maker-list span{display:block;padding:10px 6px;border-bottom:1px dashed #bbcbb7;animation:paperRise .65s both}
+.maker-list span:nth-child(1){animation-delay:1.2s}.maker-list span:nth-child(2){animation-delay:1.45s}.maker-list span:nth-child(3){animation-delay:1.7s}.maker-list span:nth-child(4){animation-delay:1.95s}
+.powered-pill{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;justify-content:center;width:min(338px,calc(100vw - 64px));min-height:35px;margin:0 auto;padding:9px 18px;border-radius:99px;background:linear-gradient(96deg,#4a55df 0%,#6628ed 49%,#8c0cda 80%,#5310c9 100%);box-shadow:0 4px 12px #6246c93b;animation:paperRise .8s 2.25s both,powerSpectrum 3.5s ease-in-out infinite alternate}
+.powered-pill:before{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 8% 36%,#fff8 0 1px,transparent 2.4px),radial-gradient(circle at 15% 72%,#fff9 0 1px,transparent 2.5px),radial-gradient(circle at 26% 43%,#fff9 0 1.2px,transparent 2.7px),radial-gradient(circle at 39% 69%,#fffa 0 1px,transparent 2.4px),radial-gradient(circle at 48% 29%,#fffb 0 1.5px,transparent 3px),radial-gradient(circle at 58% 64%,#fff8 0 1px,transparent 2.5px),radial-gradient(circle at 69% 38%,#fffa 0 1.4px,transparent 3px),radial-gradient(circle at 81% 72%,#fff9 0 1px,transparent 2.4px),radial-gradient(circle at 91% 40%,#fffb 0 1.5px,transparent 3px);filter:drop-shadow(0 0 3px #fff8);animation:powerStars 2.8s ease-in-out infinite alternate}
+.powered-text{position:relative;z-index:1;color:#fff;font:700 12px/1.2 system-ui,sans-serif;letter-spacing:.04em;text-shadow:0 1px 2px #30127588;white-space:nowrap}
+.finale-credits.leaving{animation:finaleFade .65s ease reverse both}
+.finale-merge{width:min(800px,100%);position:relative;animation:paperRise .7s ease both}
+.merge-caption{font-size:13px;letter-spacing:.22em;font-weight:800;color:#778d79;margin:0 0 18px}
+.merge-grid{width:min(550px,100%);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 auto;position:relative;z-index:2}
+.merge-grid .achievement-badge{max-width:112px;width:100%;margin:auto;transform-origin:center;box-shadow:0 5px 12px #6e705b3a}
+.merge-grid.merging .achievement-badge{animation:badgeConverge 2.4s cubic-bezier(.66,.02,.67,1) forwards;animation-delay:var(--delay)}
+.boss-sigil{position:absolute;z-index:1;top:50%;left:50%;width:165px;height:165px;margin:-80px 0 0 -82px;border-radius:25px;background:conic-gradient(from 30deg,#749984,#ceb77d,#5e816f,#bba8a4,#749984);box-shadow:0 0 0 9px #fff8e6,0 20px 45px #4b5a4580;opacity:0;transform:scale(.25) rotate(-90deg);display:grid;place-items:center;transition:opacity .8s,transform 1.1s cubic-bezier(.17,.9,.17,1.15)}
+.boss-sigil:before{content:"";position:absolute;inset:19px;border:3px dashed #fff5db;border-radius:14px;transform:rotate(45deg)}
+.boss-sigil span{font-size:70px;color:#fffae8;filter:drop-shadow(2px 4px 1px #4b6650)}
+.finale-merge.sigil-visible .boss-sigil{opacity:1;transform:scale(1) rotate(0)}
+.finale-merge h2{font-family:Georgia,"Noto Serif SC",serif;color:#496b55;font-size:clamp(30px,5vw,50px);margin:28px 0 0;opacity:0;transform:translateY(10px);transition:opacity .6s,transform .6s}
+.finale-merge.sigil-visible h2{opacity:1;transform:translateY(0)}
+.finale-screen.exiting{animation:finaleFade .65s ease reverse both}
+
+/* 导航、弹层和纸片界面均使用轻缓的进出场。 */
+.app-shell{animation:paperRise .55s ease both}
+.side-panel>div{animation:paperRise .52s ease both}
+.side-panel>div:nth-child(2){animation-delay:.05s}.side-panel>div:nth-child(3){animation-delay:.1s}.side-panel>div:nth-child(4){animation-delay:.15s}
+.game-layout.level-swapping .level-heading,.game-layout.level-swapping .map-stage{animation:paperRise .48s ease both}
+.boss-screen:not([hidden]){animation:paperRise .6s ease both}
+.modal-backdrop.hidden{display:flex;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .23s ease,visibility .23s ease}
+.modal-backdrop:not(.hidden){opacity:1;visibility:visible;transition:opacity .23s ease,visibility .23s ease}
+.modal-backdrop:not(.hidden) .modal-paper{animation:paperRise .35s ease both}
+.boss-overlay:not([hidden]){animation:finaleFade .3s ease both}
+button{transition:background-color .2s ease,color .2s ease,box-shadow .2s ease,opacity .2s ease,transform .2s ease}
+button:not(:disabled):hover{filter:brightness(1.025)}
+button:not(:disabled):active{transform:translateY(1px) scale(.985)}
+#sound-button.active{background:#e0eee3;color:#4c795c;border-color:#b7d1bc}
+
+@keyframes badgePop{0%{transform:scale(.6) rotate(-12deg);opacity:.1}60%{transform:scale(1.12) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes paperRise{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
+@keyframes finaleFade{from{opacity:0}to{opacity:1}}
+@keyframes sparkPulse{50%{transform:scale(1.12) rotate(14deg);opacity:.75}}
+@keyframes powerSpectrum{from{filter:brightness(.96) saturate(.95)}to{filter:brightness(1.13) saturate(1.1)}}
+@keyframes powerStars{from{transform:translateX(-2px);opacity:.55}to{transform:translateX(7px);opacity:1}}
+@keyframes badgeConverge{0%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}70%{opacity:1}100%{opacity:0;transform:translate(var(--tx),var(--ty)) rotate(var(--spin)) scale(.12)}}
+@media(max-width:1050px){.achievement-card{grid-column:1/-1}.badge-shelf{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(max-width:700px){.achievement-card{padding:14px;border-radius:13px}.badge-shelf{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.achievement-badge .badge-title{font-size:9px}.maker-list{gap:4px 10px;margin:24px auto 12px}.finale-screen{padding:48px 16px}.finale-skip{top:17px;right:18px}.merge-grid{gap:4px}}
+@media(max-width:700px){.video-paper{padding:10px;border-radius:12px}.video-heading{margin:3px 3px 12px}.video-heading h2{font-size:19px}.video-heading p{font-size:11px}}
+@media(max-width:420px){.badge-shelf{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.merge-grid.merging .achievement-badge{opacity:0}.finale-merge.sigil-visible .boss-sigil{opacity:1;transform:none}.powered-pill{animation:paperRise .8s 2.25s both}.powered-pill:before{animation:none}}

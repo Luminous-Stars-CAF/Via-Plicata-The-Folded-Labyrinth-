@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f0e5">
+  <link rel="icon" href="data:,">
+  <meta name="description" content="折页迷途：旋转纸片地图，为自动行走的小纸片人接出一条路。">
+  <title>折页迷途 · 纸上迷宫</title>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./advanced.css">
+  <link rel="stylesheet" href="./boss.css">
+  <link rel="stylesheet" href="./achievements.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="brand-copy"><span class="eyebrow">纸上迷宫 · 自动行走</span><h1>折页迷途</h1></div>
+      <div class="header-actions">
+        <button id="sound-button" class="icon-button soft" type="button" title="切换声音" aria-label="切换声音">♪</button>
+        <button id="help-button" class="icon-button soft" type="button" title="查看图例" aria-label="查看图例">?</button>
+      </div>
+    </header>
+
+    <main id="normal-game" class="game-layout">
+      <section class="play-section" aria-label="游戏地图">
+        <div class="level-heading">
+          <div><span id="level-number" class="level-kicker">第 01 关 / 共 06 关</span><h2 id="level-title">第一道折痕</h2><p id="level-description">让两块纸上的道路接在一起。</p></div>
+          <span id="level-tag" class="level-tag">道路连接</span>
+        </div>
+        <div class="map-stage">
+          <div class="stage-decoration decoration-one" aria-hidden="true"></div>
+          <div class="stage-decoration decoration-two" aria-hidden="true"></div>
+          <div id="board" class="board" role="group" aria-label="可旋转地图"></div>
+          <div class="stage-note">点击纸片选中 · 点弧形箭头旋转 · Q / E 也可旋转</div>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <div class="status-card">
+          <div class="card-label">当前记录 <span class="mini-star">✦</span></div>
+          <div class="stats"><div><span class="stat-label">用时</span><strong id="time-value">00:00</strong></div><div><span class="stat-label">旋转</span><strong><span id="turn-value">0</span><small> / <span id="turn-limit">2</span></small></strong></div></div>
+          <div class="budget-label"><span>剩余折叠次数</span><strong id="remaining-value">2</strong></div>
+          <div id="budget-pips" class="budget-pips" aria-label="剩余旋转次数"></div>
+          <div class="inventory"><span id="key-status">◇ 钥匙未出现</span><span id="bridge-status">⌁ 桥梁未出现</span></div>
+        </div>
+        <div class="control-card">
+          <div class="card-label">折页操作</div>
+          <div class="main-controls"><button id="play-button" class="primary-button" type="button" title="开始或暂停行走"><span id="play-icon">▶</span><span id="play-label">开始行走</span></button><button id="undo-button" class="icon-button" type="button" title="撤销上一步旋转" aria-label="撤销上一步旋转">↶</button><button id="restart-button" class="icon-button" type="button" title="重开本关" aria-label="重开本关">⟳</button></div>
+          <div class="selected-row"><span id="selected-label">已选：暂无</span><div><button id="rotate-left" class="small-button" type="button" title="逆时针旋转选中纸片（Q）" aria-label="逆时针旋转选中纸片">↶ <kbd>Q</kbd></button><button id="rotate-right" class="small-button" type="button" title="顺时针旋转选中纸片（E）" aria-label="顺时针旋转选中纸片">↷ <kbd>E</kbd></button></div></div>
+          <p class="control-hint">纸片人会自动前进；撞墙向右转。请在它出发前折好路线。</p>
+        </div>
+        <div class="progress-card"><div class="card-label">旅程 · 星级记录</div><div id="level-dots" class="level-dots" aria-label="关卡列表"></div><p id="clear-status" class="clear-status" aria-live="polite">已通关 0 / 12</p><p id="perfect-status" class="perfect-status" aria-live="polite">三星完成 0 / 12</p><button id="video-entry" class="video-entry" type="button" disabled title="前十二关全部通关后即可观看，不要求三星">▶ 通关视频 · 全部通关后解锁</button><button id="boss-entry" class="boss-entry" type="button" disabled title="前十二关全部获得三星名牌后解锁">隐藏第 13 关 · 需 12 枚三星名牌</button><button id="next-button" class="next-button" type="button" title="进入下一关">下一关 <span>→</span></button></div>
+        <div class="achievement-card"><div class="card-label">纸上勋章 <span id="badge-count">0 / 12</span></div><p class="badge-intro">每关三星，收下一枚专属名牌。</p><div id="badge-shelf" class="badge-shelf" aria-label="关卡成就名牌"></div><div id="boss-badge-slot" class="boss-badge-slot" hidden></div><button id="finale-replay" class="finale-replay" type="button" hidden title="重看致谢与名牌融合动画">▶ 重看集章终章</button></div>
+      </aside>
+    </main>
+    <section id="boss-screen" class="boss-screen" hidden aria-label="隐藏第十三关">
+      <div class="boss-heading"><div><span class="level-kicker">隐藏第 13 关 · 终极折页</span><h2>万页迷宫</h2><p>100 × 100 张纸片，每张 100 × 100 格。正程与返程使用同一张纸的不同道路，错过钥匙会在远处被锁门拦下。</p></div><button id="boss-exit" class="outline-button" type="button">返回旅程</button></div>
+      <div class="boss-layout">
+        <div class="boss-map-card"><div class="boss-card-title">全图导航 <span>拖动平移 · 滚轮缩放 · 点击选纸片</span></div><canvas id="boss-atlas" width="600" height="600" aria-label="局部纸片地图"></canvas><div class="boss-nav"><button id="boss-follow" type="button">定位纸片人</button><label>视野 <input id="boss-zoom" type="range" min="8" max="40" value="20"></label><label>行 <input id="boss-row" type="number" min="1" max="100" value="1"></label><label>列 <input id="boss-col" type="number" min="1" max="100" value="2"></label><button id="boss-jump" type="button">跳转</button></div><canvas id="boss-minimap" width="200" height="200" aria-label="一百乘一百纸片总览"></canvas></div>
+        <div class="boss-detail-card"><div class="boss-card-title">纸片内部 <span id="boss-selected-label">第 1 行 · 第 2 列</span></div><canvas id="boss-detail" width="500" height="500" aria-label="选中纸片的一百乘一百格道路"></canvas><p class="boss-detail-note">深色是墙，浅色是道路，箭头表示单向；红色端点危险。每张纸片都有数百步的绕路。</p></div>
+        <aside class="boss-control-card"><div class="boss-card-title">Boss 状态</div><div class="boss-stat-grid"><span>纸片人</span><strong id="boss-player-position">1 行 1 列</strong><span>已走</span><strong id="boss-steps">0 步</strong><span>经过纸片</span><strong id="boss-visited">1 / 10000</strong><span>回程钥匙</span><strong id="boss-key-status">◇ 未取得</strong><span>用时</span><strong id="boss-time">00:00</strong><span>旋转</span><strong id="boss-turns">0 / 0</strong></div><div class="boss-controls"><button id="boss-left" type="button" title="逆时针旋转选中纸片">↶ 逆时针</button><button id="boss-right" type="button" title="顺时针旋转选中纸片">↷ 顺时针</button><button id="boss-undo" type="button">撤销旋转</button><button id="boss-restart" type="button">重开本关</button><button id="boss-play" class="primary-button" type="button">▶ 开始行走</button><label>行走速度 <select id="boss-speed"><option value="1">原速 1×</option><option value="64">64×</option><option value="4096" selected>4096×</option><option value="65536">65536×</option></select></label></div><form id="boss-skip-form" class="boss-skip-form"><label for="boss-skip-code">跳关代码</label><div><input id="boss-skip-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="输入代码" aria-label="第十三关跳关代码"><button type="submit" title="使用跳关代码">→ 使用</button></div><small>仅跳过本关，不计入星级记录。</small></form><p id="boss-hint" class="boss-hint" role="status">同一张纸片要在返程再次使用；错过钥匙会在远处被锁门拦下。</p></aside>
+      </div>
+      <details class="boss-video-card"><summary>▶ 观看第 13 关加速通关视频</summary><p>演示双程往返的正确路线；旋转准备与数百万步行走均作倍速压缩。</p><video controls preload="metadata" playsinline poster="./boss-video-poster.png" src="./boss-clear.webm" aria-label="第十三关加速通关视频"></video></details>
+      <div id="boss-overlay" class="boss-overlay" hidden><div class="boss-overlay-paper"><h3 id="boss-overlay-title"></h3><p id="boss-overlay-message"></p><div id="boss-award" class="boss-award" hidden></div><div><button id="boss-overlay-back" type="button">返回地图</button><button id="boss-overlay-restart" type="button">重开本关</button></div></div></div>
+    </section>
+    <footer>一张纸，一条路。让每一道折痕都通向出口。</footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-paper"><button id="modal-close" class="modal-close" type="button" aria-label="关闭">×</button><span id="modal-kicker" class="modal-kicker"></span><h2 id="modal-title"></h2><p id="modal-message"></p><div id="modal-details" class="modal-details"></div><div id="modal-actions" class="modal-actions"></div></div></div>
+
+  <div id="video-overlay" class="video-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="video-overlay-title">
+    <div class="video-paper"><div class="video-heading"><div><span class="level-kicker">十二关全通关奖励</span><h2 id="video-overlay-title">第 13 关 · 加速通关回放</h2><p>提前看看万页迷宫的正确路线；观看视频不会解锁 Boss。</p></div><button id="video-close" class="icon-button soft" type="button" title="关闭视频" aria-label="关闭视频">×</button></div><video id="reward-video" controls preload="metadata" playsinline poster="./boss-video-poster.png" src="./boss-clear.webm" aria-label="第十三关加速通关视频"></video></div>
+  </div>
+
+  <section id="finale-screen" class="finale-screen" hidden aria-label="集齐名牌终章动画" aria-live="polite">
+    <button id="finale-skip" class="finale-skip" type="button" title="跳过终章动画，直接进入 Boss 关">跳过动画 →</button>
+    <div id="finale-credits" class="finale-credits">
+      <div class="finale-spark" aria-hidden="true">✦</div>
+      <p class="finale-eyebrow">十二枚折页名牌 · 全部收集</p>
+      <h2>感谢游玩</h2>
+      <p class="finale-subtitle">每一道折痕，都因为你而有了方向。</p>
+      <div class="maker-list"><span>Lyu Yanchen</span><span>Li Xinjie</span><span>Cong Yilong</span><span>Dong Yinzhi</span></div>
+      <div class="powered-pill"><span class="powered-text">Powered by GPT-6 Astra</span></div>
+    </div>
+    <div id="finale-merge" class="finale-merge" hidden>
+      <p class="merge-caption">十二道折痕，合为最后一页</p>
+      <div id="merge-grid" class="merge-grid" aria-hidden="true"></div>
+      <div class="boss-sigil" aria-hidden="true"><span>✦</span></div>
+      <h2>万页迷宫</h2>
+    </div>
+  </section>
+
+  <script type="module" src="./game.js"></script>
+</body>
+</html>
