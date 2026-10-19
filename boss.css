@@ -1,0 +1,53 @@
+[hidden] { display: none !important; }
+.level-dot { position: relative; height: 43px; }
+.level-rating { position: absolute; left: 0; right: 0; bottom: 2px; font-size: 7px; letter-spacing: -1px; line-height: 1; color: #d89d4f; }
+.perfect-status { margin: 5px 0 10px; color: #688775; font-size: 12px; font-weight: 800; }
+.boss-entry { width: 100%; min-height: 41px; margin-bottom: 10px; border: 1px solid #bdcbbd; border-radius: 9px; background: #e5eee1; color: #446650; font-weight: 800; }
+.boss-entry:not(:disabled):hover { background: #d5e6d5; }
+.boss-entry:disabled { background: #ebe8df; color: #9a9d91; }
+.boss-screen { margin-top: 28px; }
+.boss-heading { display: flex; justify-content: space-between; align-items: start; gap: 24px; margin-bottom: 20px; }
+.boss-heading h2 { margin: 8px 0 5px; font: 800 clamp(25px, 3vw, 36px) Georgia, "Noto Serif SC", serif; color: #344f43; }
+.boss-heading p { max-width: 780px; margin: 0; color: #738276; font-size: 14px; line-height: 1.5; }
+.boss-heading .outline-button { flex: none; padding: 10px 15px; border-radius: 9px; font-weight: 800; }
+.boss-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 245px; gap: 14px; align-items: start; }
+.boss-map-card, .boss-detail-card, .boss-control-card { min-width: 0; padding: 16px; border: 1px solid #e3ddcf; border-radius: 17px; background: #fffaf0; box-shadow: 0 9px 22px #74674c15; }
+.boss-card-title { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 11px; font-weight: 800; color: #426353; }
+.boss-card-title span { font-size: 11px; font-weight: 500; color: #899489; text-align: right; }
+#boss-atlas, #boss-detail { display: block; width: 100%; aspect-ratio: 1; height: auto; background: #e8e4d8; border: 1px solid #d8d4c6; border-radius: 7px; image-rendering: pixelated; }
+#boss-atlas { cursor: crosshair; touch-action: none; }
+#boss-detail { cursor: default; }
+.boss-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 12px; font-size: 12px; color: #738577; }
+.boss-nav button, .boss-controls button, .boss-overlay button { min-height: 36px; border: 1px solid #cad8ca; border-radius: 8px; background: #f7fbf2; color: #426653; font-weight: 800; }
+.boss-nav button { padding: 0 9px; }
+.boss-nav label { display: flex; align-items: center; gap: 4px; }
+.boss-nav input[type=number] { width: 53px; height: 34px; border: 1px solid #d5d7ca; border-radius: 6px; padding: 0 4px; background: #fffdf7; color: #435b49; }
+.boss-nav input[type=range] { width: 80px; accent-color: #72987b; }
+#boss-minimap { display: block; width: 140px; height: 140px; margin: 14px auto 0; border: 1px solid #d5d7ca; border-radius: 4px; background: #e7e3d8; image-rendering: pixelated; cursor: crosshair; }
+.boss-detail-note, .boss-hint { color: #7e8d80; font-size: 12px; line-height: 1.5; }
+.boss-stat-grid { display: grid; grid-template-columns: auto 1fr; gap: 9px 8px; font-size: 12px; color: #849085; }
+.boss-stat-grid strong { justify-self: end; color: #466852; font-variant-numeric: tabular-nums; }
+.boss-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 17px; }
+.boss-controls button { padding: 0 5px; }
+.boss-controls button:disabled { opacity: .45; }
+.boss-controls #boss-play, .boss-controls label { grid-column: 1 / -1; }
+.boss-controls #boss-play { background: #668d76; color: white; }
+.boss-controls label { display: flex; align-items: center; justify-content: space-between; color: #778679; font-size: 12px; }
+.boss-controls select { max-width: 126px; padding: 7px; border: 1px solid #d4d9ca; border-radius: 7px; background: #fffdf7; color: #45644f; }
+.boss-skip-form { display: grid; gap: 7px; margin-top: 16px; padding-top: 14px; border-top: 1px dashed #d9d9ca; color: #567463; font-size: 12px; font-weight: 800; }
+.boss-skip-form > div { display: flex; gap: 6px; }
+.boss-skip-form input { min-width: 0; flex: 1; padding: 8px; border: 1px solid #cad8ca; border-radius: 8px; background: #fffdf7; color: #405e4d; font: inherit; }
+.boss-skip-form button { flex: none; padding: 0 9px; border: 1px solid #cad8ca; border-radius: 8px; background: #e5eee1; color: #426653; font-weight: 800; cursor: pointer; }
+.boss-skip-form small { color: #8a9889; font-size: 11px; font-weight: 500; }
+.boss-video-card { margin-top: 16px; padding: 15px 18px; border: 1px solid #e3ddcf; border-radius: 15px; background: #fffaf0; color: #587564; }
+.boss-video-card summary { cursor: pointer; font-weight: 800; }
+.boss-video-card p { margin: 9px 0; font-size: 12px; line-height: 1.5; color: #849085; }
+.boss-video-card video { display: block; width: min(100%, 960px); aspect-ratio: 16 / 9; margin: 10px auto 0; border-radius: 9px; background: #e7e3d8; }
+.boss-overlay { position: fixed; z-index: 45; inset: 0; display: grid; place-items: center; padding: 20px; background: #364b3cb8; }
+.boss-overlay-paper { width: min(390px, 100%); padding: 28px; border: 1px solid white; border-radius: 8px; background: #fffaf0; box-shadow: 8px 8px 0 #d8c9ad; transform: rotate(-.5deg); }
+.boss-overlay h3 { margin: 0 0 10px; color: #3d614c; font: 800 26px Georgia, "Noto Serif SC", serif; }
+.boss-overlay p { color: #7c8a7b; line-height: 1.6; }
+.boss-overlay-paper > div { display: flex; justify-content: end; gap: 8px; }
+.boss-overlay button { padding: 0 13px; }
+@media (max-width: 1200px) { .boss-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .boss-control-card { grid-column: 1 / -1; } .boss-controls { grid-template-columns: repeat(4, 1fr); } .boss-controls #boss-play, .boss-controls label { grid-column: auto; } }
+@media (max-width: 700px) { .boss-heading { flex-direction: column; gap: 12px; } .boss-heading p { font-size: 12px; } .boss-layout { grid-template-columns: 1fr; } .boss-control-card { grid-column: auto; order: -1; } .boss-controls { grid-template-columns: 1fr 1fr; } .boss-controls #boss-play, .boss-controls label { grid-column: 1 / -1; } .boss-map-card, .boss-detail-card, .boss-control-card { padding: 12px; } .boss-card-title span { max-width: 160px; } }

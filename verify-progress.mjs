@@ -1,0 +1,20 @@
+import { allCleared, clearedCount, allPerfect, bossWasSkipped, loadRecords, markBossSkipped, perfectCount, saveRecord } from "./progress.js";
+
+const memory = new Map();
+const storage = { getItem: (key) => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, value) };
+const records = loadRecords(storage);
+if (allCleared(records) || clearedCount(records) !== 0 || allPerfect(records) || perfectCount(records) !== 0) throw Error("空记录不应解锁视频或隐藏关");
+for (let id = 1; id <= 11; id++) saveRecord(records, id, { stars: 1, timeMs: 30_000, rotations: id }, storage);
+if (allCleared(loadRecords(storage)) || clearedCount(loadRecords(storage)) !== 11) throw Error("只通关十一关不能解锁视频");
+saveRecord(records, 12, { stars: 1, timeMs: 30_000, rotations: 12 }, storage);
+if (!allCleared(loadRecords(storage)) || allPerfect(loadRecords(storage))) throw Error("十二关任意星级应解锁视频，但不能解锁 Boss");
+for (let id = 1; id <= 12; id++) saveRecord(records, id, { stars: 3, timeMs: 30_000, rotations: id }, storage);
+if (!allPerfect(loadRecords(storage)) || perfectCount(loadRecords(storage)) !== 12) throw Error("十二关三星后应解锁隐藏关");
+saveRecord(records, 1, { stars: 1, timeMs: 1_000, rotations: 0 }, storage);
+if (loadRecords(storage)[1].stars !== 3) throw Error("低星重玩不能覆盖最佳记录");
+if (bossWasSkipped(storage)) throw Error("Boss 不能预先显示为已跳过");
+markBossSkipped(storage);
+if (!bossWasSkipped(storage) || loadRecords(storage)[13]) throw Error("跳关必须单独保存，且不能产生星级记录");
+memory.set("folded-path-records-v1", "broken-json");
+if (Object.keys(loadRecords(storage)).length) throw Error("损坏的记录应安全回退为空");
+console.log("十二关通关视频门槛、三星 Boss 门槛、跳关独立记录、最佳成绩保留与损坏回退均通过");
