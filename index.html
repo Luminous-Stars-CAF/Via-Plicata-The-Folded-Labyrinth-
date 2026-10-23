@@ -458,6 +458,10 @@ body.no-scroll {
 .paper-person.blocked { animation: personBlocked .24s ease; }
 .paper-person { transform-origin: 50% 62%; }
 .paper-person .person-head, .paper-person .person-feet { transform-origin: 50% 50%; }
+.portal-trace-layer { position: absolute; inset: 0; z-index: 8; pointer-events: none; overflow: visible; }
+.portal-trace-layer svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.portal-trace-layer .portal-particle { position: absolute; width: 3px; height: 3px; margin: -1.5px; border-radius: 50%; background: #a6bcae; box-shadow: 0 0 5px #b9c9bd88; opacity: 0; }
+.portal-trace-layer .portal-ghost { z-index: 1; pointer-events: none; }
 @keyframes personBlocked {
   25% { transform: translateX(-3px) rotate(var(--face)); }
   50% { transform: translateX(3px) rotate(var(--face)); }
@@ -521,9 +525,9 @@ body.no-scroll {
             <button id="move-down" class="dpad-button down" type="button" title="向下走" aria-label="向下走">↓</button>
             <button id="move-right" class="dpad-button right" type="button" title="向右走" aria-label="向右走">→</button>
           </div>
-          <div class="main-controls"><button id="undo-button" class="icon-button" type="button" title="撤销上一步旋转" aria-label="撤销上一步旋转">↶</button><button id="restart-button" class="icon-button" type="button" title="重开本关" aria-label="重开本关">⟳</button></div>
+          <div class="main-controls"><button id="step-back-button" class="icon-button" type="button" title="退回上一步行走（R）" aria-label="退回上一步行走">↩</button><button id="undo-button" class="icon-button" type="button" title="撤销上一步旋转" aria-label="撤销上一步旋转">↶</button><button id="restart-button" class="icon-button" type="button" title="重开本关（Z）" aria-label="重开本关">⟳</button></div>
           <div class="selected-row"><span id="selected-label">已选：暂无</span><div><button id="rotate-left" class="small-button" type="button" title="逆时针旋转选中纸片（Q）" aria-label="逆时针旋转选中纸片">↶ <kbd>Q</kbd></button><button id="rotate-right" class="small-button" type="button" title="顺时针旋转选中纸片（E）" aria-label="顺时针旋转选中纸片">↷ <kbd>E</kbd></button></div></div>
-          <p class="control-hint">先旋转纸片拼接路线，再用 WASD、方向键或屏幕方向按钮控制纸片人走向出口。</p>
+          <p class="control-hint">WASD / 方向键行走 · R 退回一步 · Z 重开 · Q / E 旋转选中纸片。</p>
         </div>
         <div class="progress-card"><div class="card-label">旅程 · 星级记录</div><div id="level-dots" class="level-dots" aria-label="关卡列表"></div><p id="clear-status" class="clear-status" aria-live="polite">已通关 0 / 12</p><p id="perfect-status" class="perfect-status" aria-live="polite">三星完成 0 / 12</p><button id="video-entry" class="video-entry" type="button" disabled title="前十二关全部通关后即可观看，不要求三星">▶ 通关视频 · 全部通关后解锁</button><button id="boss-entry" class="boss-entry" type="button" disabled title="前十二关全部获得三星名牌后解锁">隐藏第 13 关 · 需 12 枚三星名牌</button><button id="next-button" class="next-button" type="button" title="进入下一关">下一关 <span>→</span></button></div>
         <div class="achievement-card"><div class="card-label">纸上勋章 <span id="badge-count">0 / 12</span></div><p class="badge-intro">每关三星，收下一枚专属名牌。</p><div id="badge-shelf" class="badge-shelf" aria-label="关卡成就名牌"></div><div id="boss-badge-slot" class="boss-badge-slot" hidden></div><button id="finale-replay" class="finale-replay" type="button" hidden title="重看致谢与名牌融合动画">▶ 重看集章终章</button></div>
@@ -534,7 +538,7 @@ body.no-scroll {
       <div class="boss-layout">
         <div class="boss-map-card"><div class="boss-card-title">全图导航 <span>拖动平移 · 滚轮缩放 · 点击选纸片</span></div><canvas id="boss-atlas" width="600" height="600" aria-label="局部纸片地图"></canvas><div class="boss-nav"><button id="boss-follow" type="button">定位纸片人</button><label>视野 <input id="boss-zoom" type="range" min="8" max="40" value="20"></label><label>行 <input id="boss-row" type="number" min="1" max="100" value="1"></label><label>列 <input id="boss-col" type="number" min="1" max="100" value="2"></label><button id="boss-jump" type="button">跳转</button></div><canvas id="boss-minimap" width="200" height="200" aria-label="一百乘一百纸片总览"></canvas></div>
         <div class="boss-detail-card"><div class="boss-card-title">纸片内部 <span id="boss-selected-label">第 1 行 · 第 2 列</span></div><canvas id="boss-detail" width="500" height="500" aria-label="选中纸片的一百乘一百格道路"></canvas><p class="boss-detail-note">深色是墙，浅色是道路，箭头表示单向；红色端点危险。每张纸片都有数百步的绕路；带浅色胶带的纸片不能旋转。</p></div>
-        <aside class="boss-control-card"><div class="boss-card-title">Boss 状态</div><div class="boss-stat-grid"><span>纸片人</span><strong id="boss-player-position">1 行 1 列</strong><span>已走</span><strong id="boss-steps">0 步</strong><span>经过纸片</span><strong id="boss-visited">1 / 10000</strong><span>回程钥匙</span><strong id="boss-key-status">◇ 未取得</strong><span>用时</span><strong id="boss-time">00:00</strong><span>旋转</span><strong id="boss-turns">0 / 0</strong></div><div class="boss-controls"><button id="boss-left" type="button" title="逆时针旋转选中纸片">↶ 逆时针</button><button id="boss-right" type="button" title="顺时针旋转选中纸片">↷ 顺时针</button><button id="boss-undo" type="button">撤销旋转</button><button id="boss-restart" type="button">重开本关</button><button id="boss-play" class="primary-button" type="button">▶ 开始行走</button><label>行走速度 <select id="boss-speed"><option value="1">原速 1×</option><option value="64">64×</option><option value="4096" selected>4096×</option><option value="65536">65536×</option></select></label></div><form id="boss-skip-form" class="boss-skip-form"><label for="boss-skip-code">跳关代码</label><div><input id="boss-skip-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="输入代码" aria-label="第十三关跳关代码"><button type="submit" title="使用跳关代码">→ 使用</button></div><small>仅跳过本关，不计入星级记录。</small></form><p id="boss-hint" class="boss-hint" role="status">同一张纸片要在返程再次使用；错过钥匙会在远处被锁门拦下；带胶带的纸片固定不动。</p></aside>
+        <aside class="boss-control-card"><div class="boss-card-title">Boss 状态</div><div class="boss-stat-grid"><span>纸片人</span><strong id="boss-player-position">1 行 1 列</strong><span>已走</span><strong id="boss-steps">0 步</strong><span>经过纸片</span><strong id="boss-visited">1 / 10000</strong><span>回程钥匙</span><strong id="boss-key-status">◇ 未取得</strong><span>用时</span><strong id="boss-time">00:00</strong><span>旋转</span><strong id="boss-turns">0 / 0</strong></div><div class="boss-controls"><button id="boss-left" type="button" title="逆时针旋转选中纸片">↶ 逆时针</button><button id="boss-right" type="button" title="顺时针旋转选中纸片">↷ 顺时针</button><button id="boss-undo" type="button" title="撤销上一步旋转（R）">撤销旋转</button><button id="boss-restart" type="button" title="重开本关（Z）">重开本关</button><button id="boss-play" class="primary-button" type="button">▶ 开始行走</button><label>行走速度 <select id="boss-speed"><option value="1">原速 1×</option><option value="64">64×</option><option value="4096" selected>4096×</option><option value="65536">65536×</option></select></label></div><form id="boss-skip-form" class="boss-skip-form"><label for="boss-skip-code">跳关代码</label><div><input id="boss-skip-code" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="输入代码" aria-label="第十三关跳关代码"><button type="submit" title="使用跳关代码">→ 使用</button></div><small>仅跳过本关，不计入星级记录。</small></form><p id="boss-hint" class="boss-hint" role="status">同一张纸片要在返程再次使用；错过钥匙会在远处被锁门拦下；带胶带的纸片固定不动。R 撤销旋转，Z 重开。</p></aside>
       </div>
       <details class="boss-video-card"><summary>▶ 观看第 13 关加速通关视频</summary><p>演示双程往返的正确路线；旋转准备与数百万步行走均作倍速压缩。</p><video controls preload="metadata" playsinline data-boss-poster="1" data-boss-video="1" aria-label="第十三关加速通关视频"></video></details>
       <div id="boss-overlay" class="boss-overlay" hidden><div class="boss-overlay-paper"><h3 id="boss-overlay-title"></h3><p id="boss-overlay-message"></p><div id="boss-award" class="boss-award" hidden></div><div><button id="boss-overlay-back" type="button">返回地图</button><button id="boss-overlay-restart" type="button">重开本关</button></div></div></div>
@@ -1728,6 +1732,7 @@ function createBossGame({ onExit, onWin, onSkip }) {
   }
 
   function newState() {
+    if (frameId) { cancelAnimationFrame(frameId); frameId = 0; }
     try { localStorage.removeItem(SAVE_KEY); } catch { /* 私密模式可能禁用存储 */ }
     state = {
       rotations: createBossRotations(), player: { ...BOSS_START }, selected: 1,
@@ -2060,8 +2065,11 @@ function createBossGame({ onExit, onWin, onSkip }) {
   });
   document.addEventListener("keydown", (event) => {
     if (screen.hidden || !overlay.hidden || event.altKey || event.ctrlKey || event.metaKey || event.target.matches("input,select,textarea")) return;
-    if (event.key.toLowerCase() === "q") rotate(-1);
-    if (event.key.toLowerCase() === "e") rotate(1);
+    const key = event.key.toLowerCase();
+    if (key === "q") rotate(-1);
+    if (key === "e") rotate(1);
+    if (key === "r") { event.preventDefault(); undo(); }
+    if (key === "z") { event.preventDefault(); newState(); }
     if (event.code === "Space") { event.preventDefault(); playOrPause(); }
   });
   document.addEventListener("visibilitychange", () => { if (document.hidden && state?.phase === "running") playOrPause(); });
@@ -2195,6 +2203,7 @@ let winTimer = null;
 let walkInputTimer = null;
 let walkInputBusy = false;
 let queuedWalkDirection = null;
+let walkHistory = [];
 let pendingTrapTip = false;
 let unlocked = Math.max(1, Math.min(LEVELS.length, readUnlocked()));
 const records = loadRecords();
@@ -2212,15 +2221,79 @@ const finale = createFinale({
 
 function cloneState(value) { return JSON.parse(JSON.stringify(value)); }
 const WALK_DURATION = 230;
+const PORTAL_DURATION = 390;
 function resetWalkInput() {
   clearTimeout(walkInputTimer);
   walkInputTimer = null;
   walkInputBusy = false;
   queuedWalkDirection = null;
 }
-function animatePersonStep(from, direction, teleported = false) {
+function walkSnapshot() {
+  return { player: { ...state.player }, steps: state.steps, hasKey: state.hasKey, bridgeOn: state.bridgeOn, crumble: [...state.crumble], phase: state.phase };
+}
+function animatePortalTransfer(from, person, direction, entry) {
+  const entryTile = [...board.querySelectorAll(".tile")].find((tile) => tile.dataset.tile === entry.tile);
+  const entryCell = entryTile?.querySelector(`.cell-grid .cell:nth-child(${entry.y * CELL_SIZE + entry.x + 1})`);
+  if (!entryCell) return 0;
+  const boardRect = board.getBoundingClientRect();
+  const center = (rect) => ({ x: (rect.left + rect.right) / 2 - boardRect.left, y: (rect.top + rect.bottom) / 2 - boardRect.top });
+  const start = center(from.rect);
+  const inlet = center(entryCell.getBoundingClientRect());
+  const outlet = center(person.getBoundingClientRect());
+  const bend = Math.min(24, Math.hypot(outlet.x - inlet.x, outlet.y - inlet.y) * .12);
+  const control = { x: (inlet.x + outlet.x) / 2 - Math.sign(outlet.y - inlet.y || 1) * bend, y: (inlet.y + outlet.y) / 2 + Math.sign(outlet.x - inlet.x || 1) * bend };
+  const curve = (t) => ({ x: (1 - t) ** 2 * inlet.x + 2 * (1 - t) * t * control.x + t ** 2 * outlet.x, y: (1 - t) ** 2 * inlet.y + 2 * (1 - t) * t * control.y + t ** 2 * outlet.y });
+  const layer = document.createElement("div");
+  layer.className = "portal-trace-layer";
+  layer.dataset.portalTrace = "";
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", `0 0 ${boardRect.width} ${boardRect.height}`);
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", `M ${inlet.x} ${inlet.y} Q ${control.x} ${control.y} ${outlet.x} ${outlet.y}`);
+  path.setAttribute("fill", "none");
+  path.setAttribute("stroke", "#9bb7aa");
+  path.setAttribute("stroke-width", "1.2");
+  path.setAttribute("stroke-dasharray", "2 5");
+  path.animate([{ opacity: 0, strokeDashoffset: 12 }, { offset: .35, opacity: .55, strokeDashoffset: 0 }, { opacity: 0, strokeDashoffset: -8 }], { duration: PORTAL_DURATION, easing: "ease-out" });
+  svg.append(path);
+  layer.append(svg);
+  const ghost = from.person;
+  if (ghost) {
+    ghost.classList.remove("blocked");
+    ghost.classList.add("portal-ghost");
+    ghost.setAttribute("aria-hidden", "true");
+    Object.assign(ghost.style, { left: `${start.x - from.rect.width / 2}px`, top: `${start.y - from.rect.height / 2}px`, width: `${from.rect.width}px`, height: `${from.rect.height}px` });
+    layer.append(ghost);
+    ghost.animate([
+      { opacity: 1, transform: `translate(0,0) rotate(${from.direction * 90}deg) scale(1)` },
+      { opacity: 0, transform: `translate(${inlet.x - start.x}px,${inlet.y - start.y}px) rotate(${direction * 90}deg) scale(.22)` }
+    ], { duration: 155, easing: "cubic-bezier(.38,0,.7,.55)", fill: "forwards" });
+  }
+  for (let i = 0; i < 9; i++) {
+    const particle = document.createElement("i");
+    particle.className = "portal-particle";
+    particle.style.left = `${inlet.x}px`;
+    particle.style.top = `${inlet.y}px`;
+    layer.append(particle);
+    const at = (t) => { const point = curve(t); return `translate(${point.x - inlet.x}px,${point.y - inlet.y}px)`; };
+    particle.animate([
+      { offset: 0, opacity: 0, transform: `${at(0)} scale(.6)` },
+      { offset: .25, opacity: .65, transform: `${at(.25)} scale(1)` },
+      { offset: .72, opacity: .5, transform: `${at(.72)} scale(.85)` },
+      { offset: 1, opacity: 0, transform: `${at(1)} scale(.5)` }
+    ], { duration: 245, delay: 60 + i * 13, easing: "ease-in-out", fill: "both" });
+  }
+  board.append(layer);
+  entryCell.animate([{ filter: "brightness(1)", transform: "scale(1)" }, { offset: .55, filter: "brightness(1.2)", transform: "scale(1.06)" }, { filter: "brightness(1)", transform: "scale(1)" }], { duration: 200 });
+  person.parentElement.animate([{ filter: "brightness(1)", transform: "scale(1)" }, { offset: .55, filter: "brightness(1.2)", transform: "scale(1.06)" }, { filter: "brightness(1)", transform: "scale(1)" }], { duration: 210, delay: 155 });
+  person.animate([{ offset: 0, opacity: 0, transform: `scale(.75) rotate(${direction * 90}deg)` }, { offset: .4, opacity: 0, transform: `scale(.75) rotate(${direction * 90}deg)` }, { offset: 1, opacity: 1, transform: `scale(1) rotate(${direction * 90}deg)` }], { duration: PORTAL_DURATION, easing: "ease-out", fill: "backwards" });
+  setTimeout(() => layer.remove(), PORTAL_DURATION + 40);
+  return PORTAL_DURATION;
+}
+function animatePersonStep(from, direction, portalEntry = null) {
   const person = board.querySelector(".paper-person");
   if (!person || !from || !person.animate || matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
+  if (portalEntry) return animatePortalTransfer(from, person, direction, portalEntry);
   const to = person.getBoundingClientRect();
   const dx = (from.rect.left + from.rect.right - to.left - to.right) / 2;
   const dy = (from.rect.top + from.rect.bottom - to.top - to.bottom) / 2;
@@ -2228,20 +2301,13 @@ function animatePersonStep(from, direction, teleported = false) {
   let turn = (from.direction - direction + 4) % 4;
   if (turn > 2) turn -= 4;
   const startAngle = targetAngle + turn * 90;
-  if (teleported) {
-    person.animate([
-      { opacity: 0, transform: `scale(.82) rotate(${targetAngle}deg)` },
-      { opacity: 1, transform: `scale(1) rotate(${targetAngle}deg)` }
-    ], { duration: WALK_DURATION, easing: "cubic-bezier(.2,.75,.25,1)" });
-  } else {
-    // 起步、滑行、收步：前段稍加速，后段柔和停下，不让角色上下跳格。
-    person.animate([
-      { offset: 0, transform: `translate(${dx}px,${dy}px) rotate(${startAngle}deg) scale(.97)`, easing: "cubic-bezier(.4,0,.75,.45)" },
-      { offset: .16, transform: `translate(${dx * .92}px,${dy * .92}px) rotate(${targetAngle}deg) scale(.98)`, easing: "cubic-bezier(.18,.65,.28,1)" },
-      { offset: .76, transform: `translate(${dx * .08}px,${dy * .08}px) rotate(${targetAngle}deg) scale(1.02)`, easing: "ease-out" },
-      { offset: 1, transform: `translate(0,0) rotate(${targetAngle}deg) scale(1)` }
-    ], { duration: WALK_DURATION });
-  }
+  // 起步、滑行、收步：前段稍加速，后段柔和停下，不让角色上下跳格。
+  person.animate([
+    { offset: 0, transform: `translate(${dx}px,${dy}px) rotate(${startAngle}deg) scale(.97)`, easing: "cubic-bezier(.4,0,.75,.45)" },
+    { offset: .16, transform: `translate(${dx * .92}px,${dy * .92}px) rotate(${targetAngle}deg) scale(.98)`, easing: "cubic-bezier(.18,.65,.28,1)" },
+    { offset: .76, transform: `translate(${dx * .08}px,${dy * .08}px) rotate(${targetAngle}deg) scale(1.02)`, easing: "ease-out" },
+    { offset: 1, transform: `translate(0,0) rotate(${targetAngle}deg) scale(1)` }
+  ], { duration: WALK_DURATION });
   person.querySelector(".person-head")?.animate([
     { transform: "rotate(-5deg)" }, { transform: "rotate(3deg)", offset: .56 }, { transform: "rotate(0deg)" }
   ], { duration: WALK_DURATION, easing: "ease-in-out" });
@@ -2254,14 +2320,14 @@ function requestWalk(direction) {
   if (!state || ["won", "failed"].includes(state.phase) || !$("#modal").classList.contains("hidden")) return;
   if (walkInputBusy) { queuedWalkDirection = direction; return; }
   walkInputBusy = true;
-  move(direction);
+  const duration = move(direction);
   walkInputTimer = setTimeout(() => {
     walkInputBusy = false;
     walkInputTimer = null;
     const next = queuedWalkDirection;
     queuedWalkDirection = null;
     if (next !== null) requestWalk(next);
-  }, matchMedia("(prefers-reduced-motion: reduce)").matches ? 70 : WALK_DURATION);
+  }, matchMedia("(prefers-reduced-motion: reduce)").matches ? 70 : (duration || WALK_DURATION));
 }
 function currentLevel() { return LEVELS[levelIndex]; }
 function tileById(id) { return state.tiles.find((tile) => tile.id === id); }
@@ -2303,6 +2369,7 @@ function drawStats() {
   const canRotate = !!selectedTile && !selectedTile.blank && !selectedTile.locked && selectedTile.id !== state.player.tile && state.phase !== "won" && state.phase !== "failed";
   $("#rotate-left").disabled = !canRotate;
   $("#rotate-right").disabled = !canRotate;
+  $("#step-back-button").disabled = state.phase === "won" || (state.phase === "failed" ? !state.stepBackup : !walkHistory.length);
   $("#undo-button").disabled = state.history.length === 0;
   const finished = ["won", "failed"].includes(state.phase);
   document.querySelectorAll(".dpad-button").forEach((button) => { button.disabled = finished; });
@@ -2367,6 +2434,7 @@ function drawProgress() {
 function loadLevel(index, showIntro = true) {
   const changingLevel = !!state && index !== levelIndex;
   resetWalkInput();
+  walkHistory = [];
   clearTimeout(winTimer);
   clearTimeout(finaleTimer);
   clearTimeout(toastTimer);
@@ -2421,6 +2489,7 @@ function rotate(id, delta) {
 function undo() {
   if (!state.history.length) return showToast("还没有可以撤销的旋转");
   resetWalkInput();
+  walkHistory = []; // 旋转撤销可能回滚整段路线，旧行走记录不能继续使用。
   const previous = state.history.pop();
   const history = state.history;
   state = { ...previous, history };
@@ -2432,7 +2501,7 @@ function undo() {
 function move(direction) {
   if (["won", "failed"].includes(state.phase)) return;
   const fromPerson = board.querySelector(".paper-person");
-  const from = fromPerson ? { rect: fromPerson.getBoundingClientRect(), direction: state.player.direction } : null;
+  const from = fromPerson ? { rect: fromPerson.getBoundingClientRect(), direction: state.player.direction, person: fromPerson.cloneNode(true) } : null;
   const backup = snapshot();
   const originTile = tileById(state.player.tile);
   const origin = cellAt(originTile, state.player.x, state.player.y);
@@ -2459,6 +2528,7 @@ function move(direction) {
     state.stepBackup = backup;
     return fail(cell.type === "!" ? "纸片人踩到了陷阱。" : "纸片人跌进了悬崖。", "step");
   }
+  walkHistory.push(walkSnapshot());
   if (origin.type === "C") state.crumble.push(origin.key);
   state.player.tile = targetTile.id;
   state.player.x = x;
@@ -2467,14 +2537,14 @@ function move(direction) {
   state.steps++;
   if (cell.type === "K") { state.hasKey = true; playTone(760, .09); showToast("找到钥匙了！"); }
   if (cell.type === "T") { state.bridgeOn = true; playTone(650, .09); showToast("纸桥升起来了！"); }
-  let teleported = false;
+  let portalEntry = null;
   if (isPortal(cell.type)) {
     const pair = findPortalPair(cell.type, cell.key);
-    if (pair) { state.player.tile = pair.tile.id; state.player.x = pair.x; state.player.y = pair.y; teleported = true; playTone(880, .12); }
+    if (pair) { portalEntry = { tile: targetTile.id, x, y }; state.player.tile = pair.tile.id; state.player.x = pair.x; state.player.y = pair.y; playTone(880, .12); }
   }
-  if (cell.type === "X") return win(from, direction, teleported);
+  if (cell.type === "X") return win(from, direction);
   drawBoard();
-  animatePersonStep(from, direction, teleported);
+  return animatePersonStep(from, direction, portalEntry);
 }
 
 function flashPerson() {
@@ -2579,7 +2649,7 @@ function stars() {
   return 1;
 }
 
-function win(from, direction, teleported) {
+function win(from, direction) {
   state.phase = "won";
   sound.cue("award");
   if (levelIndex + 2 > unlocked) { unlocked = Math.min(LEVELS.length, levelIndex + 2); saveUnlocked(unlocked); }
@@ -2588,7 +2658,7 @@ function win(from, direction, teleported) {
   const newBadge = rating === 3 && records[currentLevel().id]?.stars !== 3;
   saveRecord(records, currentLevel().id, { stars: rating, rotations: state.used, steps: state.steps });
   drawBoard();
-  const walkDuration = animatePersonStep(from, direction, teleported);
+  const walkDuration = animatePersonStep(from, direction);
   drawProgress();
   if (newBadge) $("#badge-shelf").querySelector(`[data-badge="${currentLevel().id}"]`)?.classList.add("just-earned");
   const final = levelIndex === LEVELS.length - 1;
@@ -2611,6 +2681,7 @@ function win(from, direction, teleported) {
   };
   if (walkDuration) winTimer = setTimeout(showResult, walkDuration);
   else showResult();
+  return walkDuration;
 }
 
 function openBoss() {
@@ -2643,6 +2714,29 @@ function stepBack() {
   hideModal();
   drawBoard();
   showToast("已退回上一步");
+}
+
+function undoWalk() {
+  if (state.phase === "failed" && state.stepBackup) return stepBack();
+  if (["won", "failed"].includes(state.phase)) return;
+  const previous = walkHistory.at(-1);
+  if (!previous) return showToast("还没有可以退回的行走步数");
+  const tile = tileById(previous.player.tile);
+  const base = baseCoordinate(previous.player.x, previous.player.y, tile.rotation);
+  const raw = tile.cells[base.y][base.x];
+  if (["#", " ", "!"].includes(raw)) return showToast("原位置已被旋转挡住，请先撤销那次旋转。");
+  resetWalkInput();
+  walkHistory.pop();
+  state.player = { ...previous.player };
+  state.steps = previous.steps;
+  state.hasKey = previous.hasKey;
+  state.bridgeOn = previous.bridgeOn;
+  state.crumble = [...previous.crumble];
+  state.phase = previous.phase;
+  state.stepBackup = null;
+  drawBoard();
+  playTone(380, .045);
+  showToast("已退回上一步行走");
 }
 
 function fail(message, kind = "rotate") {
@@ -2708,9 +2802,12 @@ board.addEventListener("keydown", (event) => {
   }
 });
 document.addEventListener("keydown", (event) => {
-  if (!$("#start-screen").classList.contains("hidden") || $("#normal-game").hidden || !$("#finale-screen").hidden || !$("#video-overlay").hidden || !$("#modal").classList.contains("hidden")) return;
+  if (!$("#start-screen").classList.contains("hidden") || $("#normal-game").hidden || !$("#finale-screen").hidden || !$("#video-overlay").hidden) return;
   if (event.altKey || event.ctrlKey || event.metaKey || event.target.matches("input,textarea,select,[contenteditable]")) return;
   const key = event.key.toLowerCase();
+  if (key === "z") { event.preventDefault(); loadLevel(levelIndex, false); return; }
+  if (key === "r" && ($("#modal").classList.contains("hidden") || state.phase === "failed")) { event.preventDefault(); undoWalk(); return; }
+  if (!$("#modal").classList.contains("hidden")) return;
   if (key === "q" && state.selected) rotate(state.selected, -1);
   if (key === "e" && state.selected) rotate(state.selected, 1);
   const moveKeys = { arrowup: 0, w: 0, arrowright: 1, d: 1, arrowdown: 2, s: 2, arrowleft: 3, a: 3 };
@@ -2720,6 +2817,7 @@ $("#move-up").addEventListener("click", () => requestWalk(0));
 $("#move-right").addEventListener("click", () => requestWalk(1));
 $("#move-down").addEventListener("click", () => requestWalk(2));
 $("#move-left").addEventListener("click", () => requestWalk(3));
+$("#step-back-button").addEventListener("click", undoWalk);
 $("#restart-button").addEventListener("click", () => loadLevel(levelIndex, false));
 $("#undo-button").addEventListener("click", undo);
 $("#rotate-left").addEventListener("click", () => rotate(state.selected, -1));
