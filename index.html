@@ -456,6 +456,8 @@ body.no-scroll {
 .control-card .main-controls { justify-content: center; }
 
 .paper-person.blocked { animation: personBlocked .24s ease; }
+.paper-person { transform-origin: 50% 62%; }
+.paper-person .person-head, .paper-person .person-feet { transform-origin: 50% 50%; }
 @keyframes personBlocked {
   25% { transform: translateX(-3px) rotate(var(--face)); }
   50% { transform: translateX(3px) rotate(var(--face)); }
@@ -474,7 +476,7 @@ body.no-scroll {
         <h1 class="start-title">折页迷途</h1>
         <p class="start-subtitle">旋转纸片地图，用方向键带小纸片人绕过陷阱，走到出口。</p>
         <button id="start-button" class="primary-button start-button" type="button">开始游戏</button>
-        <p class="start-hint">点击纸片选中 · 点弧形箭头旋转 · Q / E 也可旋转 · 方向键行走</p>
+        <p class="start-hint">点击纸片选中 · 点弧形箭头旋转 · Q / E 也可旋转 · WASD / 方向键行走</p>
       </div>
       <div class="start-tiles" aria-hidden="true"><span></span><span></span><span></span></div>
     </div>
@@ -499,7 +501,7 @@ body.no-scroll {
           <div class="stage-decoration decoration-one" aria-hidden="true"></div>
           <div class="stage-decoration decoration-two" aria-hidden="true"></div>
           <div id="board" class="board" role="group" aria-label="可旋转地图"></div>
-          <div class="stage-note">点击纸片选中后旋转 · Q / E 旋转 · 方向键行走</div>
+          <div class="stage-note">点击纸片选中后旋转 · Q / E 旋转 · WASD / 方向键行走</div>
         </div>
       </section>
 
@@ -521,7 +523,7 @@ body.no-scroll {
           </div>
           <div class="main-controls"><button id="undo-button" class="icon-button" type="button" title="撤销上一步旋转" aria-label="撤销上一步旋转">↶</button><button id="restart-button" class="icon-button" type="button" title="重开本关" aria-label="重开本关">⟳</button></div>
           <div class="selected-row"><span id="selected-label">已选：暂无</span><div><button id="rotate-left" class="small-button" type="button" title="逆时针旋转选中纸片（Q）" aria-label="逆时针旋转选中纸片">↶ <kbd>Q</kbd></button><button id="rotate-right" class="small-button" type="button" title="顺时针旋转选中纸片（E）" aria-label="顺时针旋转选中纸片">↷ <kbd>E</kbd></button></div></div>
-          <p class="control-hint">先旋转纸片拼接路线，再用方向键 / 方向按钮控制纸片人走向出口。</p>
+          <p class="control-hint">先旋转纸片拼接路线，再用 WASD、方向键或屏幕方向按钮控制纸片人走向出口。</p>
         </div>
         <div class="progress-card"><div class="card-label">旅程 · 星级记录</div><div id="level-dots" class="level-dots" aria-label="关卡列表"></div><p id="clear-status" class="clear-status" aria-live="polite">已通关 0 / 12</p><p id="perfect-status" class="perfect-status" aria-live="polite">三星完成 0 / 12</p><button id="video-entry" class="video-entry" type="button" disabled title="前十二关全部通关后即可观看，不要求三星">▶ 通关视频 · 全部通关后解锁</button><button id="boss-entry" class="boss-entry" type="button" disabled title="前十二关全部获得三星名牌后解锁">隐藏第 13 关 · 需 12 枚三星名牌</button><button id="next-button" class="next-button" type="button" title="进入下一关">下一关 <span>→</span></button></div>
         <div class="achievement-card"><div class="card-label">纸上勋章 <span id="badge-count">0 / 12</span></div><p class="badge-intro">每关三星，收下一枚专属名牌。</p><div id="badge-shelf" class="badge-shelf" aria-label="关卡成就名牌"></div><div id="boss-badge-slot" class="boss-badge-slot" hidden></div><button id="finale-replay" class="finale-replay" type="button" hidden title="重看致谢与名牌融合动画">▶ 重看集章终章</button></div>
@@ -2189,6 +2191,10 @@ let state;
 let toastTimer = null;
 let finaleTimer = null;
 let swapTimer = null;
+let winTimer = null;
+let walkInputTimer = null;
+let walkInputBusy = false;
+let queuedWalkDirection = null;
 let pendingTrapTip = false;
 let unlocked = Math.max(1, Math.min(LEVELS.length, readUnlocked()));
 const records = loadRecords();
@@ -2205,6 +2211,58 @@ const finale = createFinale({
 });
 
 function cloneState(value) { return JSON.parse(JSON.stringify(value)); }
+const WALK_DURATION = 230;
+function resetWalkInput() {
+  clearTimeout(walkInputTimer);
+  walkInputTimer = null;
+  walkInputBusy = false;
+  queuedWalkDirection = null;
+}
+function animatePersonStep(from, direction, teleported = false) {
+  const person = board.querySelector(".paper-person");
+  if (!person || !from || !person.animate || matchMedia("(prefers-reduced-motion: reduce)").matches) return 0;
+  const to = person.getBoundingClientRect();
+  const dx = (from.rect.left + from.rect.right - to.left - to.right) / 2;
+  const dy = (from.rect.top + from.rect.bottom - to.top - to.bottom) / 2;
+  const targetAngle = direction * 90;
+  let turn = (from.direction - direction + 4) % 4;
+  if (turn > 2) turn -= 4;
+  const startAngle = targetAngle + turn * 90;
+  if (teleported) {
+    person.animate([
+      { opacity: 0, transform: `scale(.82) rotate(${targetAngle}deg)` },
+      { opacity: 1, transform: `scale(1) rotate(${targetAngle}deg)` }
+    ], { duration: WALK_DURATION, easing: "cubic-bezier(.2,.75,.25,1)" });
+  } else {
+    // 起步、滑行、收步：前段稍加速，后段柔和停下，不让角色上下跳格。
+    person.animate([
+      { offset: 0, transform: `translate(${dx}px,${dy}px) rotate(${startAngle}deg) scale(.97)`, easing: "cubic-bezier(.4,0,.75,.45)" },
+      { offset: .16, transform: `translate(${dx * .92}px,${dy * .92}px) rotate(${targetAngle}deg) scale(.98)`, easing: "cubic-bezier(.18,.65,.28,1)" },
+      { offset: .76, transform: `translate(${dx * .08}px,${dy * .08}px) rotate(${targetAngle}deg) scale(1.02)`, easing: "ease-out" },
+      { offset: 1, transform: `translate(0,0) rotate(${targetAngle}deg) scale(1)` }
+    ], { duration: WALK_DURATION });
+  }
+  person.querySelector(".person-head")?.animate([
+    { transform: "rotate(-5deg)" }, { transform: "rotate(3deg)", offset: .56 }, { transform: "rotate(0deg)" }
+  ], { duration: WALK_DURATION, easing: "ease-in-out" });
+  person.querySelector(".person-feet")?.animate([
+    { transform: "skewX(-9deg)" }, { transform: "skewX(7deg)", offset: .58 }, { transform: "skewX(0deg)" }
+  ], { duration: WALK_DURATION, easing: "ease-in-out" });
+  return WALK_DURATION;
+}
+function requestWalk(direction) {
+  if (!state || ["won", "failed"].includes(state.phase) || !$("#modal").classList.contains("hidden")) return;
+  if (walkInputBusy) { queuedWalkDirection = direction; return; }
+  walkInputBusy = true;
+  move(direction);
+  walkInputTimer = setTimeout(() => {
+    walkInputBusy = false;
+    walkInputTimer = null;
+    const next = queuedWalkDirection;
+    queuedWalkDirection = null;
+    if (next !== null) requestWalk(next);
+  }, matchMedia("(prefers-reduced-motion: reduce)").matches ? 70 : WALK_DURATION);
+}
 function currentLevel() { return LEVELS[levelIndex]; }
 function tileById(id) { return state.tiles.find((tile) => tile.id === id); }
 function tileAt(col, row) { return state.tiles.find((tile) => tile.col === col && tile.row === row); }
@@ -2308,6 +2366,8 @@ function drawProgress() {
 
 function loadLevel(index, showIntro = true) {
   const changingLevel = !!state && index !== levelIndex;
+  resetWalkInput();
+  clearTimeout(winTimer);
   clearTimeout(finaleTimer);
   clearTimeout(toastTimer);
   $("#toast").classList.remove("visible");
@@ -2360,6 +2420,7 @@ function rotate(id, delta) {
 
 function undo() {
   if (!state.history.length) return showToast("还没有可以撤销的旋转");
+  resetWalkInput();
   const previous = state.history.pop();
   const history = state.history;
   state = { ...previous, history };
@@ -2370,6 +2431,8 @@ function undo() {
 
 function move(direction) {
   if (["won", "failed"].includes(state.phase)) return;
+  const fromPerson = board.querySelector(".paper-person");
+  const from = fromPerson ? { rect: fromPerson.getBoundingClientRect(), direction: state.player.direction } : null;
   const backup = snapshot();
   const originTile = tileById(state.player.tile);
   const origin = cellAt(originTile, state.player.x, state.player.y);
@@ -2404,12 +2467,14 @@ function move(direction) {
   state.steps++;
   if (cell.type === "K") { state.hasKey = true; playTone(760, .09); showToast("找到钥匙了！"); }
   if (cell.type === "T") { state.bridgeOn = true; playTone(650, .09); showToast("纸桥升起来了！"); }
+  let teleported = false;
   if (isPortal(cell.type)) {
     const pair = findPortalPair(cell.type, cell.key);
-    if (pair) { state.player.tile = pair.tile.id; state.player.x = pair.x; state.player.y = pair.y; playTone(880, .12); }
+    if (pair) { state.player.tile = pair.tile.id; state.player.x = pair.x; state.player.y = pair.y; teleported = true; playTone(880, .12); }
   }
-  if (cell.type === "X") return win();
+  if (cell.type === "X") return win(from, direction, teleported);
   drawBoard();
+  animatePersonStep(from, direction, teleported);
 }
 
 function flashPerson() {
@@ -2514,7 +2579,7 @@ function stars() {
   return 1;
 }
 
-function win() {
+function win(from, direction, teleported) {
   state.phase = "won";
   sound.cue("award");
   if (levelIndex + 2 > unlocked) { unlocked = Math.min(LEVELS.length, levelIndex + 2); saveUnlocked(unlocked); }
@@ -2523,21 +2588,29 @@ function win() {
   const newBadge = rating === 3 && records[currentLevel().id]?.stars !== 3;
   saveRecord(records, currentLevel().id, { stars: rating, rotations: state.used, steps: state.steps });
   drawBoard();
+  const walkDuration = animatePersonStep(from, direction, teleported);
   drawProgress();
   if (newBadge) $("#badge-shelf").querySelector(`[data-badge="${currentLevel().id}"]`)?.classList.add("just-earned");
   const final = levelIndex === LEVELS.length - 1;
+  const wonLevel = levelIndex;
   const justCompletedCollection = !wasPerfect && allPerfect(records);
   const optimal = optimalStepCount();
   const award = newBadge ? `<div class="award-detail">${badgeMarkup(currentLevel().id, true)}<span><strong>新名牌已获得</strong><small>三星珍藏 · ${currentLevel().name}</small></span></div>` : "";
-  if (justCompletedCollection) {
-    showModal({ kicker: "十二枚名牌 · 全部收集", title: "终章即将展开", message: "谢谢你走完每一道折痕。", details: `${award}<div>步数 ${state.steps}（最优 ${optimal}） · 旋转 ${state.used} 次</div>`, actions: [{ label: "立即开启终章 →", primary: true, callback: () => { clearTimeout(finaleTimer); hideModal(); finale.start(); } }] });
-    finaleTimer = setTimeout(() => { hideModal(); finale.start(); }, 2600);
-    return;
-  }
-  const finalActions = allPerfect(records)
-    ? [{ label: "重玩本关", callback: () => loadLevel(levelIndex, false) }, { label: "进入隐藏关 →", primary: true, callback: openBoss }]
-    : [{ label: "重玩本关", callback: () => loadLevel(levelIndex, false) }];
-  showModal({ kicker: "路线接通", title: final ? "所有折页已走通！" : "抵达出口！", message: currentLevel().goal, details: `<div class="result-stars">${"✦".repeat(rating)}<span>${"✦".repeat(3 - rating)}</span></div>${award}<div>步数 ${state.steps}（最优 ${optimal}） · 旋转 ${state.used} 次</div>${final && !allPerfect(records) ? `<div>距离隐藏关还差 ${12 - perfectCount(records)} 个三星记录</div>` : ""}`, actions: final ? finalActions : [{ label: "再玩一次", callback: () => loadLevel(levelIndex, false) }, { label: "下一关 →", primary: true, callback: () => loadLevel(levelIndex + 1) }] });
+  const showResult = () => {
+    winTimer = null;
+    if (state.phase !== "won" || levelIndex !== wonLevel) return;
+    if (justCompletedCollection) {
+      showModal({ kicker: "十二枚名牌 · 全部收集", title: "终章即将展开", message: "谢谢你走完每一道折痕。", details: `${award}<div>步数 ${state.steps}（最优 ${optimal}） · 旋转 ${state.used} 次</div>`, actions: [{ label: "立即开启终章 →", primary: true, callback: () => { clearTimeout(finaleTimer); hideModal(); finale.start(); } }] });
+      finaleTimer = setTimeout(() => { hideModal(); finale.start(); }, 2600);
+      return;
+    }
+    const finalActions = allPerfect(records)
+      ? [{ label: "重玩本关", callback: () => loadLevel(levelIndex, false) }, { label: "进入隐藏关 →", primary: true, callback: openBoss }]
+      : [{ label: "重玩本关", callback: () => loadLevel(levelIndex, false) }];
+    showModal({ kicker: "路线接通", title: final ? "所有折页已走通！" : "抵达出口！", message: currentLevel().goal, details: `<div class="result-stars">${"✦".repeat(rating)}<span>${"✦".repeat(3 - rating)}</span></div>${award}<div>步数 ${state.steps}（最优 ${optimal}） · 旋转 ${state.used} 次</div>${final && !allPerfect(records) ? `<div>距离隐藏关还差 ${12 - perfectCount(records)} 个三星记录</div>` : ""}`, actions: final ? finalActions : [{ label: "再玩一次", callback: () => loadLevel(levelIndex, false) }, { label: "下一关 →", primary: true, callback: () => loadLevel(levelIndex + 1) }] });
+  };
+  if (walkDuration) winTimer = setTimeout(showResult, walkDuration);
+  else showResult();
 }
 
 function openBoss() {
@@ -2564,6 +2637,7 @@ function closeVideo() {
 
 function stepBack() {
   if (!state.stepBackup) return;
+  resetWalkInput();
   const history = state.history;
   state = { ...cloneState(state.stepBackup), history, stepBackup: null };
   hideModal();
@@ -2634,18 +2708,18 @@ board.addEventListener("keydown", (event) => {
   }
 });
 document.addEventListener("keydown", (event) => {
-  if (!$("#start-screen").classList.contains("hidden") || $("#normal-game").hidden || !$("#finale-screen").hidden || !$("#video-overlay").hidden) return;
-  if (event.altKey || event.ctrlKey || event.metaKey || event.target.matches("input,textarea")) return;
+  if (!$("#start-screen").classList.contains("hidden") || $("#normal-game").hidden || !$("#finale-screen").hidden || !$("#video-overlay").hidden || !$("#modal").classList.contains("hidden")) return;
+  if (event.altKey || event.ctrlKey || event.metaKey || event.target.matches("input,textarea,select,[contenteditable]")) return;
   const key = event.key.toLowerCase();
   if (key === "q" && state.selected) rotate(state.selected, -1);
   if (key === "e" && state.selected) rotate(state.selected, 1);
   const moveKeys = { arrowup: 0, w: 0, arrowright: 1, d: 1, arrowdown: 2, s: 2, arrowleft: 3, a: 3 };
-  if (key in moveKeys) { event.preventDefault(); move(moveKeys[key]); }
+  if (key in moveKeys) { event.preventDefault(); requestWalk(moveKeys[key]); }
 });
-$("#move-up").addEventListener("click", () => move(0));
-$("#move-right").addEventListener("click", () => move(1));
-$("#move-down").addEventListener("click", () => move(2));
-$("#move-left").addEventListener("click", () => move(3));
+$("#move-up").addEventListener("click", () => requestWalk(0));
+$("#move-right").addEventListener("click", () => requestWalk(1));
+$("#move-down").addEventListener("click", () => requestWalk(2));
+$("#move-left").addEventListener("click", () => requestWalk(3));
 $("#restart-button").addEventListener("click", () => loadLevel(levelIndex, false));
 $("#undo-button").addEventListener("click", undo);
 $("#rotate-left").addEventListener("click", () => rotate(state.selected, -1));
@@ -2663,7 +2737,7 @@ $("#sound-button").setAttribute("aria-pressed", String(sound.isEnabled()));
 $("#sound-button").title = sound.isEnabled() ? "关闭音乐与音效" : "打开音乐与音效";
 $("#sound-button").addEventListener("click", () => { const enabled = sound.setEnabled(!sound.isEnabled()); $("#sound-button").classList.toggle("active", enabled); $("#sound-button").setAttribute("aria-pressed", String(enabled)); $("#sound-button").title = enabled ? "关闭音乐与音效" : "打开音乐与音效"; showToast(enabled ? "音乐与音效已打开" : "音乐与音效已关闭"); });
 document.addEventListener("click", (event) => { if (event.target.closest("button") && !event.target.closest("#sound-button")) sound.cue("click"); }, { capture: true });
-$("#help-button").addEventListener("click", () => showModal({ kicker: "折页图例", title: "每格都有它的脾气", message: "点击纸片选中，再用出现的 ↶/↷ 或 Q/E 旋转，接好道路后用方向键控制纸片人走向出口。撞墙只会停在原地，踩到 × 陷阱或悬崖会失败。", details: "✦ 出口　◆ 钥匙　▣ 锁门　● 开关　≋ 纸桥<br>→ 单向路　◌ 一次性路　◎ 传送门（同号相通）　× 陷阱（踩到即失败）<br>纸胶带 = 固定纸片，不能旋转", actions: [{ label: "知道了", primary: true, callback: hideModal }] }));
+$("#help-button").addEventListener("click", () => showModal({ kicker: "折页图例", title: "每格都有它的脾气", message: "点击纸片选中，再用出现的 ↶/↷ 或 Q/E 旋转，接好道路后用 WASD、方向键或屏幕方向按钮控制纸片人走向出口。撞墙只会停在原地，踩到 × 陷阱或悬崖会失败。", details: "✦ 出口　◆ 钥匙　▣ 锁门　● 开关　≋ 纸桥<br>→ 单向路　◌ 一次性路　◎ 传送门（同号相通）　× 陷阱（踩到即失败）<br>纸胶带 = 固定纸片，不能旋转", actions: [{ label: "知道了", primary: true, callback: hideModal }] }));
 $("#modal-close").addEventListener("click", hideModal);
 $("#modal").addEventListener("click", (event) => { if (event.target === $("#modal")) hideModal(); });
 
